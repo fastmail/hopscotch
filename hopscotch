@@ -1,0 +1,188 @@
+#!/usr/bin/env plackup
+
+use 5.010;
+use warnings;
+use strict;
+
+use Crypt::Mac::HMAC qw(hmac_hex);
+use URI::Split qw(uri_split);
+use Furl::HTTP;
+use List::MoreUtils qw(natatime);
+use Try::Tiny;
+
+use constant KEY           => $ENV{HOPSCOTCH_KEY}           // die "HOPSCOTCH_KEY not set\n";
+use constant HOST          => $ENV{HOPSCOTCH_HOST}          // "unknown";
+use constant TIMEOUT       => $ENV{HOPSCOTCH_TIMEOUT}       // 10;
+use constant HEADER_VIA    => $ENV{HOPSCOTCH_HEADER_VIA}    // "hopscotch";
+use constant LENGTH_LIMIT  => $ENV{HOPSCOTCH_LENGTH_LIMIT}  // 5242880;
+use constant MAX_REDIRECTS => $ENV{HOPSCOTCH_MAX_REDIRECTS} // 4;
+use constant PARANOID      => $ENV{HOPSCOTCH_PARANOID}      // 0;
+
+require Net::DNS::Paranoid if PARANOID;
+
+my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
+    accept accept-encoding accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
+);
+
+my %COPY_RESPONSE_HEADERS = map { $_ => 1 } qw(
+    content-type cache-control etag expires last-modified content-length transfer-encoding content-encoding content-type server
+);
+
+my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
+    image/bmp
+    image/cgm
+    image/g3fax
+    image/gif
+    image/ief
+    image/jp2
+    image/jpeg
+    image/pict
+    image/png
+    image/prs.btif
+    image/svg+xml
+    image/tiff
+    image/vnd.adobe.photoshop
+    image/vnd.djvu
+    image/vnd.dwg
+    image/vnd.dxf
+    image/vnd.fastbidsheet
+    image/vnd.fpx
+    image/vnd.fst
+    image/vnd.fujixerox.edmics-mmr
+    image/vnd.fujixerox.edmics-rlc
+    image/vnd.microsoft.icon
+    image/vnd.ms-modi
+    image/vnd.net-fpx
+    image/vnd.wap.wbmp
+    image/vnd.xiff
+    image/x-cmu-raster
+    image/x-cmx
+    image/x-macpaint
+    image/x-pcx
+    image/x-pict
+    image/x-portable-anymap
+    image/x-portable-bitmap
+    image/x-portable-graymap
+    image/x-portable-pixmap
+    image/x-quicktime
+    image/x-rgb
+    image/x-xbitmap
+    image/x-xpixmap
+    image/x-xwindowdump
+);
+
+sub request_headers {
+    my ($headers) = @_;
+    my $it = natatime 2, @$headers;
+    [
+        (map { my ($k, $v) = $it->(); exists $COPY_REQUEST_HEADERS{lc($k)} ? ($k, $v) : () } (1..(scalar @$headers)/2)),
+        'Via' => HEADER_VIA,
+        'User-Agent' => HEADER_VIA,
+    ];
+}
+
+sub response_headers {
+    my ($headers) = @_;
+    my $it = natatime 2, @$headers;
+    [
+        (map { my ($k, $v) = $it->(); exists $COPY_RESPONSE_HEADERS{lc($k)} ? ($k, $v) : () } (1..(scalar @$headers)/2)),
+        'Via' => HEADER_VIA,
+        'Hopscotch-Host' => HOST,
+    ];
+}
+
+sub response {
+    [ $_[0], response_headers($_[1] // []), [ $_[2] // () ] ];
+}
+
+my %header_checks = (
+    "content-length" => sub { 0+$_[0] <= LENGTH_LIMIT },
+    "content-type"   => sub { exists $VALID_CONTENT_TYPES{$_[0]} },
+);
+
+sub rejected {
+    my ($code, $headers) = @_;
+
+    {
+        my $codetype = substr $code, 0, 1;
+        return 1 if $codetype < 2 || $codetype > 3;
+    };
+
+    {
+        my $it = natatime 2, @$headers;
+        while (my ($k, $v) = $it->()) {
+            return 1 if exists $header_checks{$k} && !$header_checks{$k}->($v);
+        }
+    }
+
+    0;
+}
+
+my $furl = Furl::HTTP->new(
+    timeout => TIMEOUT,
+    max_redirects => MAX_REDIRECTS,
+);
+
+my $dns = PARANOID ? Net::DNS::Paranoid->new : undef;
+
+my $app = sub {
+    my ($env) = @_;
+
+    return response(405) unless $env->{REQUEST_METHOD} =~ m/^GET|HEAD$/;
+
+    my (undef, $mac, $hexurl) = split '/', $env->{REQUEST_URI}, 3;
+
+    return response(404) unless defined $mac && defined $hexurl;
+    return response(404) unless $hexurl =~ m/^[0-9a-f]+$/;
+
+    my $url = pack "h*", $hexurl;
+    my $our_mac = hmac_hex('SHA256', KEY, $url);
+
+    return response(404) unless lc($mac) eq lc($our_mac);
+
+    if (PARANOID) {
+        my ($host) = [uri_split($url)]->[1] =~ m/\@?([^\@]+)$/;
+        my ($addrs) = $dns->resolve($host);
+        return response(404) unless defined $addrs;
+    }
+
+    return sub {
+        my ($respond) = @_;
+
+        my $w;
+
+        my (undef, $code, $msg, $headers, $body) = try {
+            $furl->request(
+                method     => $env->{REQUEST_METHOD},
+                url        => $url,
+                headers    => request_headers([map { (substr($_, 5) =~ s/_/-/gr) => $env->{$_} } grep { m/^HTTP_/ } keys %$env]),
+                write_code => sub {
+                    my ($code, $msg, $headers, @rest) = @_;
+
+                    die if rejected($code, $headers);
+
+                    unless (defined $w) {
+                        $w = $respond->([@{response($code, $headers)}[0,1]]);
+                    }
+
+                    if (defined $rest[0]) {
+                        $w->write($rest[0]);
+                    }
+                    else {
+                        $w->close;
+                    }
+                }
+            );
+        }
+        catch {
+            $respond->(response(404));
+            $w = 1; # flag that we've responded
+        };
+
+        unless ($w) {
+            return $respond->(response(404)) if rejected($code, $headers);
+            return $respond->(response($code, $headers));
+        }
+    };
+
+};
