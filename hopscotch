@@ -97,7 +97,7 @@ sub response {
 
 my %header_checks = (
     "content-length" => sub { 0+$_[0] <= LENGTH_LIMIT },
-    "content-type"   => sub { exists $VALID_CONTENT_TYPES{$_[0]} },
+    "content-type"   => sub { exists $VALID_CONTENT_TYPES{lc($_[0])} },
 );
 
 sub rejected {
