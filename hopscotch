@@ -77,7 +77,6 @@ sub request_headers {
     [
         (map { my ($k, $v) = $it->(); exists $COPY_REQUEST_HEADERS{lc($k)} ? ($k, $v) : () } (1..(scalar @$headers)/2)),
         'Via' => HEADER_VIA,
-        'User-Agent' => HEADER_VIA,
     ];
 }
 
@@ -121,6 +120,7 @@ sub rejected {
 my $furl = Furl::HTTP->new(
     timeout => TIMEOUT,
     max_redirects => MAX_REDIRECTS,
+    agent => HEADER_VIA,
 );
 
 my $dns = PARANOID ? Net::DNS::Paranoid->new : undef;
