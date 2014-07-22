@@ -5,7 +5,7 @@ MAINTAINER  Robert Norris rob@eatenbyagrue.org
 RUN curl -L http://cpanmin.us | perl - App::cpanminus
 RUN cpanm Carton Starlet
 
-RUN cachebuster=08d714b git clone http://github.com/robn/hopscotch.git
+RUN cachebuster=233e1b3 git clone http://github.com/robn/hopscotch.git
 RUN cd hopscotch && carton install --deployment
 
 EXPOSE 8080

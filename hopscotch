@@ -35,6 +35,7 @@ my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
     image/gif
     image/ief
     image/jp2
+    image/jpg
     image/jpeg
     image/pict
     image/png
