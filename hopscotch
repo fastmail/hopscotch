@@ -25,7 +25,7 @@ my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
 );
 
 my %COPY_RESPONSE_HEADERS = map { $_ => 1 } qw(
-    content-type cache-control etag expires last-modified content-length transfer-encoding content-encoding content-type server
+    content-type cache-control etag expires last-modified content-length content-encoding content-type server
 );
 
 my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
