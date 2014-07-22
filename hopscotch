@@ -14,6 +14,7 @@ use constant KEY           => $ENV{HOPSCOTCH_KEY}           // die "HOPSCOTCH_KE
 use constant HOST          => $ENV{HOPSCOTCH_HOST}          // "unknown";
 use constant TIMEOUT       => $ENV{HOPSCOTCH_TIMEOUT}       // 10;
 use constant HEADER_VIA    => $ENV{HOPSCOTCH_HEADER_VIA}    // "hopscotch";
+use constant HEADER_UA     => $ENV{HOPSCOTCH_HEADER_UA}     // "hopscotch";
 use constant LENGTH_LIMIT  => $ENV{HOPSCOTCH_LENGTH_LIMIT}  // 5242880;
 use constant MAX_REDIRECTS => $ENV{HOPSCOTCH_MAX_REDIRECTS} // 4;
 use constant PARANOID      => $ENV{HOPSCOTCH_PARANOID}      // 0;
@@ -121,7 +122,7 @@ sub rejected {
 my $furl = Furl::HTTP->new(
     timeout => TIMEOUT,
     max_redirects => MAX_REDIRECTS,
-    agent => HEADER_VIA,
+    agent => HEADER_UA,
 );
 
 my $dns = PARANOID ? Net::DNS::Paranoid->new : undef;

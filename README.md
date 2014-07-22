@@ -66,8 +66,10 @@ hopscotch is configured with environment variables.
                     clients (default: `unknown`)
 * `HOPSCOTCH_TIMEOUT`: max seconds hopscotch will wait for a response befores
                        giving up (default: 10)
-* `HOPSCOTCH_HEADER_VIA`: string to include in the `via` and `user-agent`
-                          header sent to the origin host (default: `hopscotch`)
+* `HOPSCOTCH_HEADER_VIA`: string to include in the `via` header set to the
+                          origin host (default: `hopscotch`)
+* `HOPSCOTCH_HEADER_UA`: string to include in the `user-agent` header set to the
+                         origin host (default: `hopscotch`)
 * `HOPSCOTCH_LENGTH_LIMIT`: maximum `content-length` hopscotch will proxy (default:
                             5242880)
 * `HOPSCOTCH_MAX_REDIRECTS`: maximum number of redirect hopscotch will follow
