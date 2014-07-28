@@ -152,6 +152,7 @@ my $app = sub {
         my ($respond) = @_;
 
         my $w;
+        my $bytes = 0;
 
         my (undef, $code, $msg, $headers, $body) = try {
             $furl->request(
@@ -168,6 +169,8 @@ my $app = sub {
                     }
 
                     if (defined $rest[0]) {
+                        $bytes += length $rest[0];
+                        die if $bytes > LENGTH_LIMIT;
                         $w->write($rest[0]);
                     }
                     else {
@@ -177,7 +180,12 @@ my $app = sub {
             );
         }
         catch {
-            $respond->(response(404));
+            if ($w) {
+                $w->close;
+            }
+            else {
+                $respond->(response(404));
+            }
             $w = 1; # flag that we've responded
         };
 
