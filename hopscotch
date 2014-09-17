@@ -22,11 +22,11 @@ use constant PARANOID      => $ENV{HOPSCOTCH_PARANOID}      // 0;
 require Net::DNS::Paranoid if PARANOID;
 
 my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
-    accept accept-encoding accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
+    accept accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
 );
 
 my %COPY_RESPONSE_HEADERS = map { $_ => 1 } qw(
-    content-type cache-control etag expires last-modified content-length content-encoding content-type server
+    content-type cache-control etag expires last-modified content-length content-type server
 );
 
 my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
