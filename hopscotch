@@ -144,7 +144,7 @@ my $app = sub {
 
     if (PARANOID) {
         my ($host) = [uri_split($url)]->[1] =~ m/\@?([^\@]+)$/;
-        my ($addrs) = $dns->resolve($host);
+        my ($addrs) = try { $dns->resolve($host) };
         return response(404) unless defined $addrs;
     }
 
