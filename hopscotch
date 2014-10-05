@@ -132,7 +132,7 @@ my $app = sub {
 
     return response(405) unless $env->{REQUEST_METHOD} =~ m/^GET|HEAD$/;
 
-    my (undef, $mac, $hexurl) = split '/', $env->{REQUEST_URI}, 3;
+    my (undef, $mac, $hexurl) = split '/', $env->{REQUEST_URI};
 
     return response(404) unless defined $mac && defined $hexurl;
     return response(404) unless $hexurl =~ m/^[0-9a-f]+$/;
