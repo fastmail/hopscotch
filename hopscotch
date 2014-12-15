@@ -31,6 +31,7 @@ my %COPY_RESPONSE_HEADERS = map { $_ => 1 } qw(
 
 my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
     image/bmp
+    image/bitmap
     image/cgm
     image/g3fax
     image/gif
