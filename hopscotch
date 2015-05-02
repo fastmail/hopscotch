@@ -1,4 +1,4 @@
-#!/usr/bin/env plackup
+#!/usr/bin/env perl
 
 use 5.010;
 use warnings;
@@ -141,7 +141,7 @@ my $furl = Furl::HTTP->new(
 
 my $dns = PARANOID ? Net::DNS::Paranoid->new : undef;
 
-my $app = sub {
+sub app {
     my ($env) = @_;
 
     return response(405, [], "request method must be GET or HEAD (not $env->{REQUEST_METHOD})") unless $env->{REQUEST_METHOD} =~ m/^GET|HEAD$/;
@@ -214,5 +214,29 @@ my $app = sub {
             return $respond->(response($code, $headers));
         }
     };
+}
 
-};
+if (my ($url) = @ARGV) {
+    $url =~ s{http://[^/]+}{};
+    my $r = app({
+        REQUEST_METHOD => 'GET',
+        REQUEST_URI    => $url,
+    });
+
+    if (ref $r eq "ARRAY") {
+        # error already output in response()
+        exit 0;
+    }
+
+    if (ref $r eq "CODE") {
+        open my $w, '<', '/dev/null';
+        my $respond = sub { $w };
+        $r->($respond);
+    }
+
+    exit 0;
+}
+
+if (caller) {
+    return \&app;
+}
