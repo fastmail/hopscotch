@@ -18,6 +18,7 @@ use constant HEADER_UA     => $ENV{HOPSCOTCH_HEADER_UA}     // "hopscotch";
 use constant LENGTH_LIMIT  => $ENV{HOPSCOTCH_LENGTH_LIMIT}  // 5242880;
 use constant MAX_REDIRECTS => $ENV{HOPSCOTCH_MAX_REDIRECTS} // 4;
 use constant PARANOID      => $ENV{HOPSCOTCH_PARANOID}      // 0;
+use constant ERRORS        => $ENV{HOPSCOTCH_ERRORS}        // 1;
 
 require Net::DNS::Paranoid if PARANOID;
 
@@ -93,8 +94,20 @@ sub response_headers {
     ];
 }
 
+sub cleanup_error {
+    return unless ERRORS;
+    my ($err) = @_;
+    $err =~ s/ at .+ line.*//sm;
+    "E: $err\n";
+}
+
 sub response {
-    [ $_[0], response_headers($_[1] // []), [ $_[2] // () ] ];
+    my $err;
+    if (defined $_[2]) {
+        $err = cleanup_error($_[2]) if defined $_[2];
+        warn $err;
+    }
+    [ $_[0], response_headers($_[1] // []), [ $err // () ] ];
 }
 
 my %header_checks = (
@@ -103,21 +116,21 @@ my %header_checks = (
 );
 
 sub rejected {
-    my ($code, $headers) = @_;
+    my ($code, $msg, $headers) = @_;
 
     {
         my $codetype = substr $code, 0, 1;
-        return 1 if $codetype < 2 || $codetype > 3;
+        return (1, "remote returned $code $msg") if $codetype < 2 || $codetype > 3;
     };
 
     {
         my $it = natatime 2, @$headers;
         while (my ($k, $v) = $it->()) {
-            return 1 if exists $header_checks{$k} && !$header_checks{$k}->($v);
+            return (1, "remote failed header check '$k' with value '$v'") if exists $header_checks{$k} && !$header_checks{$k}->($v);
         }
     }
 
-    0;
+    return (0);
 }
 
 my $furl = Furl::HTTP->new(
@@ -131,22 +144,22 @@ my $dns = PARANOID ? Net::DNS::Paranoid->new : undef;
 my $app = sub {
     my ($env) = @_;
 
-    return response(405) unless $env->{REQUEST_METHOD} =~ m/^GET|HEAD$/;
+    return response(405, [], "request method must be GET or HEAD (not $env->{REQUEST_METHOD})") unless $env->{REQUEST_METHOD} =~ m/^GET|HEAD$/;
 
     my (undef, $mac, $hexurl) = split '/', $env->{REQUEST_URI};
 
-    return response(404) unless defined $mac && defined $hexurl;
-    return response(404) unless $hexurl =~ m/^[0-9a-f]+$/;
+    return response(404, [], "invalid URL structure (MAC/hex)") unless defined $mac && defined $hexurl;
+    return response(404, [], "invalid characters in hex fragment") unless $hexurl =~ m/^[0-9a-f]+$/;
 
     my $url = pack "h*", $hexurl;
     my $our_mac = hmac_hex('SHA256', KEY, $url);
 
-    return response(404) unless lc($mac) eq lc($our_mac);
+    return response(404, [], "invalid MAC") unless lc($mac) eq lc($our_mac);
 
     if (PARANOID) {
         my ($host) = [uri_split($url)]->[1] =~ m/\@?([^\@]+)$/;
         my ($addrs) = try { $dns->resolve($host) };
-        return response(404) unless defined $addrs;
+        return response(404, [], "attempt to access '$host' in paranoid mode") unless defined $addrs;
     }
 
     return sub {
@@ -163,7 +176,8 @@ my $app = sub {
                 write_code => sub {
                     my ($code, $msg, $headers, @rest) = @_;
 
-                    die if rejected($code, $headers);
+                    my ($rejected, $err) = rejected($code, $msg, $headers);
+                    die $err if $rejected;
 
                     unless (defined $w) {
                         $w = $respond->([@{response($code, $headers)}[0,1]]);
@@ -171,7 +185,7 @@ my $app = sub {
 
                     if (defined $rest[0]) {
                         $bytes += length $rest[0];
-                        die if $bytes > LENGTH_LIMIT;
+                        die "remote file exceeded length limit\n" if $bytes > LENGTH_LIMIT;
                         $w->write($rest[0]);
                     }
                     else {
@@ -182,16 +196,21 @@ my $app = sub {
         }
         catch {
             if ($w) {
+                # part way through stream so we can't return the error to the client
+                warn cleanup_error("stream aborted: $_");
                 $w->close;
             }
             else {
-                $respond->(response(404));
+                $respond->(response(404, [], $_));
             }
             $w = 1; # flag that we've responded
         };
 
         unless ($w) {
-            return $respond->(response(404)) if rejected($code, $headers);
+            my ($rejected, $err) = rejected($code, $msg, $headers);
+            if ($rejected) {
+                return $respond->(response(404, [], $err));
+            }
             return $respond->(response($code, $headers));
         }
     };
