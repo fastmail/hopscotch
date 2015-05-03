@@ -19,6 +19,8 @@ use constant LENGTH_LIMIT  => $ENV{HOPSCOTCH_LENGTH_LIMIT}  // 5242880;
 use constant MAX_REDIRECTS => $ENV{HOPSCOTCH_MAX_REDIRECTS} // 4;
 use constant PARANOID      => $ENV{HOPSCOTCH_PARANOID}      // 0;
 use constant ERRORS        => $ENV{HOPSCOTCH_ERRORS}        // 1;
+use constant CAFILE        => $ENV{HOPSCOTCH_CAFILE}        // undef;
+use constant CAPATH        => $ENV{HOPSCOTCH_CAPATH}        // undef;
 
 require Net::DNS::Paranoid if PARANOID;
 
@@ -134,9 +136,13 @@ sub rejected {
 }
 
 my $furl = Furl::HTTP->new(
-    timeout => TIMEOUT,
+    timeout       => TIMEOUT,
     max_redirects => MAX_REDIRECTS,
-    agent => HEADER_UA,
+    agent         => HEADER_UA,
+    ssl_opts      => {
+        CAFILE ? (SSL_ca_file => CAFILE) : (),
+        CAPATH ? (SSL_ca_path => CAPATH) : (),
+    },
 );
 
 my $dns = PARANOID ? Net::DNS::Paranoid->new : undef;
