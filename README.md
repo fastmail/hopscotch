@@ -79,6 +79,13 @@ hopscotch is configured with environment variables.
                         [`Net::DNS::Paranoid`](https://metacpan.org/pod/Net::DNS::Paranoid).
                         This costs an extra DNS lookup for each request but
                         protects against a class of SSRF attacks (default: 0)
+* `HOPSCOTCH_ERRORS`: if set to a true value, reasons for proxy failures will
+                      be output to stderr (default: true)
+* `HOPSCOTCH_CAFILE`: file containing CA certificates for HTTPS verification (default: unset)
+* `HOPSCOTCH_CAPATH`: dir containing CA certificates for HTTPS verification (default: unset)
+
+If neither the `CAFILE` nor the `CAPATH`, the certificates provided by
+`Mozilla::CA` will be used.
 
 ## who's using this?
 
