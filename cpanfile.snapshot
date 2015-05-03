@@ -153,6 +153,14 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 0
       Test 0
       perl 5.008
+  Exporter-Tiny-0.042
+    pathname: T/TO/TOBYINK/Exporter-Tiny-0.042.tar.gz
+    provides:
+      Exporter::Shiny 0.042
+      Exporter::Tiny 0.042
+    requirements:
+      ExtUtils::MakeMaker 6.17
+      perl 5.006001
   File-ShareDir-1.102
     pathname: R/RE/REHSACK/File-ShareDir-1.102.tar.gz
     provides:
@@ -179,12 +187,12 @@ DISTRIBUTIONS
       Filesys::Notify::Simple 0.12
     requirements:
       ExtUtils::MakeMaker 6.30
-  Furl-3.03
-    pathname: T/TO/TOKUHIROM/Furl-3.03.tar.gz
+  Furl-3.07
+    pathname: T/TO/TOKUHIROM/Furl-3.07.tar.gz
     provides:
-      Furl 3.03
+      Furl 3.07
       Furl::ConnectionCache undef
-      Furl::HTTP 3.03
+      Furl::HTTP 3.07
       Furl::Headers undef
       Furl::Request undef
       Furl::Response undef
@@ -280,18 +288,18 @@ DISTRIBUTIONS
       Encode 2.10
       Exporter 5.57
       ExtUtils::MakeMaker 6.30
-  IO-Socket-SSL-1.997
-    pathname: S/SU/SULLR/IO-Socket-SSL-1.997.tar.gz
+  IO-Socket-SSL-2.013
+    pathname: S/SU/SULLR/IO-Socket-SSL-2.013.tar.gz
     provides:
-      IO::Socket::SSL 1.997
+      IO::Socket::SSL 2.013
       IO::Socket::SSL::Intercept 1.93
-      IO::Socket::SSL::OCSP_Cache 1.997
-      IO::Socket::SSL::OCSP_Resolver 1.997
+      IO::Socket::SSL::OCSP_Cache 2.013
+      IO::Socket::SSL::OCSP_Resolver 2.013
       IO::Socket::SSL::PublicSuffix undef
-      IO::Socket::SSL::SSL_Context 1.997
-      IO::Socket::SSL::SSL_HANDLE 1.997
-      IO::Socket::SSL::Session_Cache 1.997
-      IO::Socket::SSL::Utils 0.03
+      IO::Socket::SSL::SSL_Context 2.013
+      IO::Socket::SSL::SSL_HANDLE 2.013
+      IO::Socket::SSL::Session_Cache 2.013
+      IO::Socket::SSL::Utils 0.031
     requirements:
       ExtUtils::MakeMaker 0
       Net::SSLeay 1.46
@@ -303,15 +311,23 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       perl 5.006002
-  List-MoreUtils-0.33
-    pathname: A/AD/ADAMK/List-MoreUtils-0.33.tar.gz
+  List-MoreUtils-0.410
+    pathname: R/RE/REHSACK/List-MoreUtils-0.410.tar.gz
     provides:
-      List::MoreUtils 0.33
+      List::MoreUtils 0.410
+      List::MoreUtils::PP 0.410
+      List::MoreUtils::XS 0.410
     requirements:
-      ExtUtils::CBuilder 0.27
-      ExtUtils::MakeMaker 6.52
-      Test::More 0.82
-      perl 5.00503
+      Carp 0
+      Exporter::Tiny 0.038
+      ExtUtils::MakeMaker 0
+      File::Basename 0
+      File::Copy 0
+      File::Path 0
+      File::Spec 0
+      IPC::Cmd 0
+      XSLoader 0
+      base 0
   Module-Build-0.4206
     pathname: L/LE/LEONT/Module-Build-0.4206.tar.gz
     provides:
@@ -493,12 +509,12 @@ DISTRIBUTIONS
       POSIX 0
       Time::Local 0
       perl 5.008001
-  Plack-1.0030
-    pathname: M/MI/MIYAGAWA/Plack-1.0030.tar.gz
+  Plack-1.0034
+    pathname: M/MI/MIYAGAWA/Plack-1.0034.tar.gz
     provides:
       HTTP::Message::PSGI undef
       HTTP::Server::PSGI undef
-      Plack 1.0030
+      Plack 1.0034
       Plack::App::CGIBin undef
       Plack::App::Cascade undef
       Plack::App::Directory undef
@@ -557,9 +573,9 @@ DISTRIBUTIONS
       Plack::Middleware::XFramework undef
       Plack::Middleware::XSendfile undef
       Plack::Recursive::ForwardRequest undef
-      Plack::Request 1.0030
+      Plack::Request 1.0034
       Plack::Request::Upload undef
-      Plack::Response 1.0030
+      Plack::Response 1.0034
       Plack::Runner undef
       Plack::TempBuffer undef
       Plack::Test undef
@@ -574,9 +590,9 @@ DISTRIBUTIONS
       Apache::LogFormat::Compiler 0.12
       Devel::StackTrace 1.23
       Devel::StackTrace::AsHTML 0.11
-      ExtUtils::MakeMaker 6.30
+      ExtUtils::MakeMaker 0
       File::ShareDir 1.00
-      File::ShareDir::Install 0.03
+      File::ShareDir::Install 0.06
       Filesys::Notify::Simple 0
       HTTP::Body 1.06
       HTTP::Message 5.814
@@ -588,6 +604,7 @@ DISTRIBUTIONS
       Try::Tiny 0
       URI 1.59
       parent 0
+      perl 5.008001
   Stream-Buffered-0.03
     pathname: D/DO/DOY/Stream-Buffered-0.03.tar.gz
     provides:
