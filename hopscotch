@@ -9,6 +9,8 @@ use URI::Split qw(uri_split);
 use Furl::HTTP;
 use List::MoreUtils qw(natatime);
 use Try::Tiny;
+use File::LibMagic;
+use Hash::MultiValue;
 
 use constant KEY           => $ENV{HOPSCOTCH_KEY}           // die "HOPSCOTCH_KEY not set\n";
 use constant HOST          => $ENV{HOPSCOTCH_HOST}          // "unknown";
@@ -29,7 +31,7 @@ my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
 );
 
 my %COPY_RESPONSE_HEADERS = map { $_ => 1 } qw(
-    content-type cache-control etag expires last-modified content-length content-type server
+    content-type cache-control etag expires last-modified content-length server
 );
 
 my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
@@ -114,7 +116,6 @@ sub response {
 
 my %header_checks = (
     "content-length" => sub { 0+$_[0] <= LENGTH_LIMIT },
-    "content-type"   => sub { exists $VALID_CONTENT_TYPES{lc(($_[0] =~ m/^([^;]+)/)[0] // "")} },
 );
 
 sub rejected {
@@ -133,6 +134,30 @@ sub rejected {
     }
 
     return (0);
+}
+
+sub type {
+    return [ grep { defined $_ && exists $VALID_CONTENT_TYPES{lc(($_ =~ m/^([^;]+)/)[0] // "")} } @_ ]->[0];
+}
+
+my $magic = File::LibMagic->new(uncompress => 1);
+
+sub rewrite_headers_from_body {
+    my ($headers, $buf) = @_;
+
+    my $hh = Hash::MultiValue->new(@$headers);
+
+    my $type = type($hh->{'content-type'});
+    if (!$type && $buf) {
+        $type = type($magic->info_from_string($buf)->{mime_type});
+    }
+    unless ($type) {
+        my $err = sprintf "remote offered non-image content%s\n", $hh->{'content-type'} ? " ($hh->{'content-type'})" : "";
+        return ($headers, $err);
+    }
+    $hh->set('content-type', $type);
+
+    return ([$hh->flatten]);
 }
 
 my $furl = Furl::HTTP->new(
@@ -176,23 +201,31 @@ sub app {
 
         my (undef, $code, $msg, $headers, $body) = try {
             $furl->request(
-                method     => $env->{REQUEST_METHOD},
+                method     => "GET",
                 url        => $url,
                 headers    => request_headers([map { (substr($_, 5) =~ s/_/-/gr) => $env->{$_} } grep { m/^HTTP_/ } keys %$env]),
                 write_code => sub {
-                    my ($code, $msg, $headers, @rest) = @_;
+                    my ($code, $msg, $headers, $buf) = @_;
 
                     my ($rejected, $err) = rejected($code, $msg, $headers);
                     die $err if $rejected;
 
+                    return if defined $buf && length $buf == 0;
+
                     unless (defined $w) {
-                        $w = $respond->([@{response($code, $headers)}[0,1]]);
+                        my ($headers_out, $err) = rewrite_headers_from_body($headers, $buf);
+                        die "$err\n" if $err;
+                        $w = $respond->([@{response($code, $headers_out)}[0,1]]);
                     }
 
-                    if (defined $rest[0]) {
-                        $bytes += length $rest[0];
+                    if (defined $buf) {
+                        if ($env->{REQUEST_METHOD} eq "HEAD") {
+                            die []; # magic to force proxy to end successfully
+                        }
+
+                        $bytes += length $buf;
                         die "remote file exceeded length limit\n" if $bytes > LENGTH_LIMIT;
-                        $w->write($rest[0]);
+                        $w->write($buf);
                     }
                     else {
                         $w->close;
@@ -202,8 +235,10 @@ sub app {
         }
         catch {
             if ($w) {
-                # part way through stream so we can't return the error to the client
-                warn cleanup_error("stream aborted: $_");
+                unless (ref $_) {
+                    # part way through stream so we can't return the error to the client
+                    warn cleanup_error("stream aborted: $_");
+                }
                 $w->close;
             }
             else {
@@ -213,11 +248,16 @@ sub app {
         };
 
         unless ($w) {
-            my ($rejected, $err) = rejected($code, $msg, $headers);
+            my $err;
+            (my $rejected, $err) = rejected($code, $msg, $headers);
             if ($rejected) {
                 return $respond->(response(404, [], $err));
             }
-            return $respond->(response($code, $headers));
+            (my $headers_out, $err) = rewrite_headers_from_body($headers);
+            if ($err) {
+                return $respond->(response(404, [], $err));
+            }
+            return $respond->(response(200, $headers_out));
         }
     };
 }

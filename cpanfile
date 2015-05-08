@@ -6,3 +6,5 @@ requires 'Furl::HTTP';
 requires 'List::MoreUtils';
 requires 'IO::Socket::SSL';
 requires 'Try::Tiny';
+requires 'File::LibMagic';
+requires 'Hash::MultiValue';
