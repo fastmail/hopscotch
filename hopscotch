@@ -249,6 +249,7 @@ sub app {
 
         unless ($w) {
             my $err;
+            return $respond->(response($code, $headers)) if $code == 304;
             (my $rejected, $err) = rejected($code, $msg, $headers);
             if ($rejected) {
                 return $respond->(response(404, [], $err));
