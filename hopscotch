@@ -24,8 +24,6 @@ use constant ERRORS        => $ENV{HOPSCOTCH_ERRORS}        // 1;
 use constant CAFILE        => $ENV{HOPSCOTCH_CAFILE}        // undef;
 use constant CAPATH        => $ENV{HOPSCOTCH_CAPATH}        // undef;
 
-require Net::DNS::Paranoid if PARANOID;
-
 my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
     accept accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
 );
@@ -170,7 +168,20 @@ my $furl = Furl::HTTP->new(
     },
 );
 
-my $dns = PARANOID ? Net::DNS::Paranoid->new : undef;
+if (PARANOID) {
+    require Net::DNS::Paranoid;
+    require Socket;
+    my $dns = Net::DNS::Paranoid->new;
+    $furl->{inet_aton} = sub {
+        my ($host) = @_;
+        my ($addrs) = try { $dns->resolve($host) };
+        unless (defined $addrs) {
+            $! = 14; # EFAULT = Bad address ;)
+            return;
+        }
+        Socket::inet_aton($host);
+    }
+}
 
 sub app {
     my ($env) = @_;
@@ -186,12 +197,6 @@ sub app {
     my $our_mac = hmac_hex('SHA256', KEY, $url);
 
     return response(404, [], "invalid MAC") unless lc($mac) eq lc($our_mac);
-
-    if (PARANOID) {
-        my ($host) = [uri_split($url)]->[1] =~ m/\@?([^\@]+)$/;
-        my ($addrs) = try { $dns->resolve($host) };
-        return response(404, [], "attempt to access '$host' in paranoid mode") unless defined $addrs;
-    }
 
     return sub {
         my ($respond) = @_;
