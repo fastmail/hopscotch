@@ -8,3 +8,4 @@ requires 'IO::Socket::SSL';
 requires 'Try::Tiny';
 requires 'File::LibMagic';
 requires 'Hash::MultiValue';
+requires 'Socket';
