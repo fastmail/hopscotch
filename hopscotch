@@ -47,6 +47,7 @@ my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
     image/prs.btif
     image/svg+xml
     image/tiff
+    image/webp
     image/vnd.adobe.photoshop
     image/vnd.djvu
     image/vnd.dwg
