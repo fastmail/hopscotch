@@ -52,6 +52,15 @@ DISTRIBUTIONS
       File::Spec 0.80
       Test::More 0.47
       perl 5.006
+  Cookie-Baker-0.05
+    pathname: K/KA/KAZEBURO/Cookie-Baker-0.05.tar.gz
+    provides:
+      Cookie::Baker 0.05
+    requirements:
+      Exporter 0
+      Module::Build 0.38
+      URI::Escape 0
+      perl 5.008001
   CryptX-0.022
     pathname: M/MI/MIK/CryptX-0.022.tar.gz
     provides:
@@ -273,6 +282,14 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 0
       Time::Local 0
       perl 5.006002
+  HTTP-Headers-Fast-0.18
+    pathname: T/TO/TOKUHIROM/HTTP-Headers-Fast-0.18.tar.gz
+    provides:
+      HTTP::Headers::Fast 0.18
+    requirements:
+      HTTP::Date 0
+      Module::Build 0.38
+      perl 5.008001
   HTTP-Message-6.06
     pathname: G/GA/GAAS/HTTP-Message-6.06.tar.gz
     provides:
@@ -329,17 +346,17 @@ DISTRIBUTIONS
       Encode 2.10
       Exporter 5.57
       ExtUtils::MakeMaker 6.30
-  IO-Socket-SSL-2.015
-    pathname: S/SU/SULLR/IO-Socket-SSL-2.015.tar.gz
+  IO-Socket-SSL-2.016
+    pathname: S/SU/SULLR/IO-Socket-SSL-2.016.tar.gz
     provides:
-      IO::Socket::SSL 2.015
+      IO::Socket::SSL 2.016
       IO::Socket::SSL::Intercept 2.014
-      IO::Socket::SSL::OCSP_Cache 2.015
-      IO::Socket::SSL::OCSP_Resolver 2.015
+      IO::Socket::SSL::OCSP_Cache 2.016
+      IO::Socket::SSL::OCSP_Resolver 2.016
       IO::Socket::SSL::PublicSuffix undef
-      IO::Socket::SSL::SSL_Context 2.015
-      IO::Socket::SSL::SSL_HANDLE 2.015
-      IO::Socket::SSL::Session_Cache 2.015
+      IO::Socket::SSL::SSL_Context 2.016
+      IO::Socket::SSL::SSL_HANDLE 2.016
+      IO::Socket::SSL::Session_Cache 2.016
       IO::Socket::SSL::Utils 2.014
     requirements:
       ExtUtils::MakeMaker 0
@@ -361,12 +378,12 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       perl 5.006002
-  List-MoreUtils-0.412
-    pathname: R/RE/REHSACK/List-MoreUtils-0.412.tar.gz
+  List-MoreUtils-0.413
+    pathname: R/RE/REHSACK/List-MoreUtils-0.413.tar.gz
     provides:
-      List::MoreUtils 0.412
-      List::MoreUtils::PP 0.412
-      List::MoreUtils::XS 0.412
+      List::MoreUtils 0.413
+      List::MoreUtils::PP 0.413
+      List::MoreUtils::XS 0.413
     requirements:
       Carp 0
       Exporter::Tiny 0.038
@@ -554,12 +571,12 @@ DISTRIBUTIONS
       POSIX 0
       Time::Local 0
       perl 5.008001
-  Plack-1.0034
-    pathname: M/MI/MIYAGAWA/Plack-1.0034.tar.gz
+  Plack-1.0037
+    pathname: M/MI/MIYAGAWA/Plack-1.0037.tar.gz
     provides:
       HTTP::Message::PSGI undef
       HTTP::Server::PSGI undef
-      Plack 1.0034
+      Plack 1.0037
       Plack::App::CGIBin undef
       Plack::App::Cascade undef
       Plack::App::Directory undef
@@ -618,9 +635,9 @@ DISTRIBUTIONS
       Plack::Middleware::XFramework undef
       Plack::Middleware::XSendfile undef
       Plack::Recursive::ForwardRequest undef
-      Plack::Request 1.0034
+      Plack::Request 1.0037
       Plack::Request::Upload undef
-      Plack::Response 1.0034
+      Plack::Response 1.0037
       Plack::Runner undef
       Plack::TempBuffer undef
       Plack::Test undef
@@ -633,6 +650,7 @@ DISTRIBUTIONS
       Plack::Util::Prototype undef
     requirements:
       Apache::LogFormat::Compiler 0.12
+      Cookie::Baker 0.05
       Devel::StackTrace 1.23
       Devel::StackTrace::AsHTML 0.11
       ExtUtils::MakeMaker 0
@@ -640,6 +658,7 @@ DISTRIBUTIONS
       File::ShareDir::Install 0.06
       Filesys::Notify::Simple 0
       HTTP::Body 1.06
+      HTTP::Headers::Fast 0.18
       HTTP::Message 5.814
       HTTP::Tiny 0.034
       Hash::MultiValue 0.05
