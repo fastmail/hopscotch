@@ -23,6 +23,7 @@ use constant PARANOID      => $ENV{HOPSCOTCH_PARANOID}      // 0;
 use constant ERRORS        => $ENV{HOPSCOTCH_ERRORS}        // 1;
 use constant CAFILE        => $ENV{HOPSCOTCH_CAFILE}        // undef;
 use constant CAPATH        => $ENV{HOPSCOTCH_CAPATH}        // undef;
+use constant IGNORE_CERTS  => $ENV{HOPSCOTCH_IGNORE_CERTS}  // undef;
 
 my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
     accept accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
@@ -164,8 +165,9 @@ my $furl = Furl::HTTP->new(
     max_redirects => MAX_REDIRECTS,
     agent         => HEADER_UA,
     ssl_opts      => {
-        CAFILE ? (SSL_ca_file => CAFILE) : (),
-        CAPATH ? (SSL_ca_path => CAPATH) : (),
+        CAFILE       ? (SSL_ca_file => CAFILE)            : (),
+        CAPATH       ? (SSL_ca_path => CAPATH)            : (),
+        IGNORE_CERTS ? (SSL_verify_callback => sub { 1 }) : (),
     },
 );
 
