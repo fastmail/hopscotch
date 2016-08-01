@@ -202,7 +202,7 @@ sub app {
     return response(404, [], "invalid MAC") unless lc($mac) eq lc($our_mac);
 
     return response(404, [], "invalid characters in URL")
-      if $url =~ m{[^A-Za-z0-9\-\._~:\/\?#\[\]\@!\$&'\(\)\*\+,;]}o;
+      if $url =~ m{[^A-Za-z0-9\-\._~:\/\?#\[\]\@!\$&'\(\)\*\+,;=\%]}o;
 
     return sub {
         my ($respond) = @_;
