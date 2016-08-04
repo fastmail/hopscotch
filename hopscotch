@@ -201,6 +201,7 @@ sub app {
 
     return response(404, [], "invalid MAC") unless lc($mac) eq lc($our_mac);
 
+    # Valid chars are unreserved + reserved chars from https://tools.ietf.org/html/rfc3986#section-2.2
     return response(404, [], "invalid characters in URL")
       if $url =~ m{[^A-Za-z0-9\-\._~:\/\?#\[\]\@!\$&'\(\)\*\+,;=\%]}o;
 
