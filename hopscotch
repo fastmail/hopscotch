@@ -110,6 +110,8 @@ sub response {
     if (defined $_[2]) {
         $err = cleanup_error($_[2]) if defined $_[2];
         warn $err;
+        $_[1] //= [];
+        push @{$_[1]}, 'Content-type' => 'text/plain';
     }
     [ $_[0], response_headers($_[1] // []), [ $err // () ] ];
 }
