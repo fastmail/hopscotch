@@ -9,7 +9,7 @@ use URI::Split qw(uri_split);
 use Furl::HTTP;
 use List::MoreUtils qw(natatime);
 use Try::Tiny;
-use File::LibMagic;
+use File::LibMagic 1.02;
 use Hash::MultiValue;
 
 use constant KEY           => $ENV{HOPSCOTCH_KEY}           // die "HOPSCOTCH_KEY not set\n";
