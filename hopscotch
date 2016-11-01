@@ -94,7 +94,7 @@ sub response_headers {
     [
         (map { my ($k, $v) = $it->(); exists $COPY_RESPONSE_HEADERS{lc($k)} ? ($k, $v) : () } (1..(scalar @$headers)/2)),
         'Via' => HEADER_VIA,
-        'Hopscotch-Host' => HOST,
+        'X-Hopscotch-Host' => HOST,
     ];
 }
 

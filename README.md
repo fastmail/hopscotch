@@ -62,7 +62,7 @@ my $hsurl = "http://hopscotch:8080/" . hmac_hex("SHA256", $KEY, $URL) . "/" . un
 hopscotch is configured with environment variables.
 
 * `HOPSCOTCH_KEY`: shared key used to generate the HMAC digest (required)
-* `HOPSCOTCH_HOST`: name to insert in the `hopscotch-host` header returned to
+* `HOPSCOTCH_HOST`: name to insert in the `x-hopscotch-host` header returned to
                     clients (default: `unknown`)
 * `HOPSCOTCH_TIMEOUT`: max seconds hopscotch will wait for a response befores
                        giving up (default: 10)
