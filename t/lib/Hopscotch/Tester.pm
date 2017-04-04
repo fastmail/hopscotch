@@ -61,7 +61,7 @@ sub new_app_and_tester {
 
         my $res = $app->($env);
 
-        my @got = Plack::Util::response_cb($res, sub {
+        Plack::Util::response_cb($res, sub {
             my $res = shift;
 
             return sub {

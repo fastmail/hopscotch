@@ -21,6 +21,7 @@ use constant ERRORS        => $ENV{HOPSCOTCH_ERRORS}        // 1;
 use constant CAFILE        => $ENV{HOPSCOTCH_CAFILE}        // undef;
 use constant CAPATH        => $ENV{HOPSCOTCH_CAPATH}        // undef;
 use constant IGNORE_CERTS  => $ENV{HOPSCOTCH_IGNORE_CERTS}  // undef;
+use constant NO_WARN       => $ENV{HOPSCOTCH_NO_WARN}       // undef;
 
 my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
     accept accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
@@ -106,7 +107,7 @@ sub response {
     my $err;
     if (defined $_[2]) {
         $err = cleanup_error($_[2]) if defined $_[2];
-        warn $err;
+        warn $err unless NO_WARN;
         $_[1] //= [];
         push @{$_[1]}, 'Content-type' => 'text/plain';
     }
@@ -194,7 +195,7 @@ sub app {
 
     unless ($env->{REQUEST_METHOD} =~ m/^GET|HEAD$/) {
         return response(
-            405, 
+            405,
             [],
             "request method must be GET or HEAD (not $env->{REQUEST_METHOD})"
         );
@@ -259,7 +260,7 @@ sub app {
             if ($w) {
                 unless (ref $_) {
                     # part way through stream so we can't return the error to the client
-                    warn cleanup_error("stream aborted: $_");
+                    warn cleanup_error("stream aborted: $_") unless NO_WARN;
                 }
                 $w->close;
             }
