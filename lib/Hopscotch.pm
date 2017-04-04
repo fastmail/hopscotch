@@ -1,18 +1,15 @@
-#!/usr/bin/env perl
-
 use 5.010;
-use warnings;
 use strict;
+use warnings;
+package Hopscotch;
+# ABSTRACT: tiny, high-performance HTTP image proxy
 
-use Crypt::Mac::HMAC qw(hmac_hex);
-use URI::Split qw(uri_split);
 use Furl::HTTP;
 use List::MoreUtils qw(natatime);
 use Try::Tiny;
 use File::LibMagic 1.02;
 use Hash::MultiValue;
 
-use constant KEY           => $ENV{HOPSCOTCH_KEY}           // die "HOPSCOTCH_KEY not set\n";
 use constant HOST          => $ENV{HOPSCOTCH_HOST}          // "unknown";
 use constant TIMEOUT       => $ENV{HOPSCOTCH_TIMEOUT}       // 60;
 use constant HEADER_VIA    => $ENV{HOPSCOTCH_HEADER_VIA}    // "1.0 hopscotch";
@@ -188,20 +185,29 @@ if (PARANOID) {
     }
 }
 
+sub to_app {
+    return \&app;
+}
+
 sub app {
     my ($env) = @_;
 
-    return response(405, [], "request method must be GET or HEAD (not $env->{REQUEST_METHOD})") unless $env->{REQUEST_METHOD} =~ m/^GET|HEAD$/;
+    unless ($env->{REQUEST_METHOD} =~ m/^GET|HEAD$/) {
+        return response(
+            405, 
+            [],
+            "request method must be GET or HEAD (not $env->{REQUEST_METHOD})"
+        );
+    }
 
-    my (undef, $mac, $hexurl) = split '/', $env->{REQUEST_URI};
+    # Our Auth middleware may set this
+    if ($env->{HOPSCOTCH_AUTH_ERROR}) {
+        my ($code, $error) = @{ $env->{HOPSCOTCH_AUTH_ERROR} };
 
-    return response(404, [], "invalid URL structure (MAC/hex)") unless defined $mac && defined $hexurl;
-    return response(404, [], "invalid characters in hex fragment") unless $hexurl =~ m/^[0-9a-f]+$/;
+        return response($code, [], $error);
+    }
 
-    my $url = pack "h*", $hexurl;
-    my $our_mac = hmac_hex('SHA256', KEY, $url);
-
-    return response(404, [], "invalid MAC") unless lc($mac) eq lc($our_mac);
+    my $url = $env->{REQUEST_URI};
 
     # Valid chars are unreserved + reserved chars from https://tools.ietf.org/html/rfc3986#section-2.2
     return response(404, [], "invalid characters in URL")
@@ -298,6 +304,4 @@ if (my ($url) = @ARGV) {
     exit 0;
 }
 
-if (caller) {
-    return \&app;
-}
+1;
