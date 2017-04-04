@@ -5,6 +5,7 @@ package Hopscotch::Tester;
 
 use LWP::Protocol::PSGI;
 use LWP::UserAgent;
+use MIME::Base64 qw(decode_base64);
 
 my $baseport = 443;
 
@@ -18,16 +19,25 @@ my $port = sub { $baseport++ };
         my ($class, $hostport, $guard) = @_;
 
         return bless {
-            lwp      => LWP::UserAgent->new,
-            hostport => $hostport,
-            guard    => $guard,
+            lwp          => LWP::UserAgent->new,
+            hostport     => $hostport,
+            guard        => $guard,
         }, $class;
     }
 
-    sub _request {
-        my ($self, $what, @args) = @_;
+    sub url {
+        my ($self) = @_;
 
-        $self->lwp->$what($self->{hostport}, @args);
+        return "https://" . $self->{hostport} . "/";
+    }
+
+    sub _request {
+        my ($self, $what, $fragment, @args) = @_;
+
+        $self->{lwp}->$what(
+            $self->url . $fragment,
+            @args,
+        );
     }
 
     sub post   { shift->_request('post',   @_) }
@@ -36,21 +46,44 @@ my $port = sub { $baseport++ };
     sub delete { shift->_request('delete', @_) }
 }
 
-sub app_and_tester {
+sub new_app_and_tester {
     my ($class, $args) = @_;
 
-    local $ENV{$_} = $args->{$_} for keys %$args;
+    local %ENV = %ENV;
 
-    my $app = do "../bin/hopscotch.psgi";
+    $ENV{$_} = $args->{$_} for keys %$args;
+
+    my $app = do "bin/hopscotch.psgi"
+        || die "Failed to execute ./bin/hopscotch: $@\n";
+
+    my $wrapped_app = sub {
+        my ($env) = @_;
+
+        my $res = $app->($env);
+
+        my @got = Plack::Util::response_cb($res, sub {
+            my $res = shift;
+
+            return sub {
+                my $chunk = shift;
+                return $chunk;
+            }
+        });
+    };
 
     my $hostport = "$host" . ":" . $port->();
 
     my $guard = LWP::Protocol::PSGI->register(
-        $app,
+        $wrapped_app,
         host => qr/\Q$hostport\E\z/i,
     );
 
-    my $lwp = Hopscotch::Tester::LWP::Wrapper->new($hostport, $guard);
+    my $lwp = Hopscotch::Tester::LWP::Wrapper->new(
+        $hostport,
+        $guard,
+    );
 
-    return ($app, $lwp);
+    return ($wrapped_app, $lwp);
 }
+
+1;

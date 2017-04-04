@@ -247,11 +247,13 @@ sub app {
                         die "remote file exceeded length limit\n" if $bytes > LENGTH_LIMIT;
                         $w->write($buf);
                     }
-                    else {
-                        $w->close;
-                    }
                 }
             );
+
+            if ($w) {
+                # Flush out the response for plack
+                $w->close;
+            }
         }
         catch {
             if ($w) {
