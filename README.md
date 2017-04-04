@@ -87,7 +87,7 @@ If neither the `CAFILE` nor the `CAPATH`, the certificates provided by
 
 ## credits and license
 
-Copyright (c) 2014 Robert Norris. MIT license. See [LICENSE.md](LICENSE.md)
+Copyright (c) 2014-2017 FastMail Pty. Ltd. MIT license. See [LICENSE.md](LICENSE.md)
 
 ## contributing
 
