@@ -14,7 +14,8 @@ subtest "Auth::SHA256" => sub {
     my $key = 'abcd';
 
     my ($app, $tester) = Hopscotch::Tester->new_app_and_tester({
-      HOPSCOTCH_KEY => $key,
+      HOPSCOTCH_KEY     => $key,
+      HOPSCOTCH_NO_WARN => 1,
     });
 
     {
