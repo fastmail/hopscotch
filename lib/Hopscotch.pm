@@ -1,18 +1,15 @@
-#!/usr/bin/env perl
-
 use 5.010;
-use warnings;
 use strict;
+use warnings;
+package Hopscotch;
+# ABSTRACT: tiny, high-performance HTTP image proxy
 
-use Crypt::Mac::HMAC qw(hmac_hex);
-use URI::Split qw(uri_split);
 use Furl::HTTP;
 use List::MoreUtils qw(natatime);
 use Try::Tiny;
 use File::LibMagic 1.02;
 use Hash::MultiValue;
 
-use constant KEY           => $ENV{HOPSCOTCH_KEY}           // die "HOPSCOTCH_KEY not set\n";
 use constant HOST          => $ENV{HOPSCOTCH_HOST}          // "unknown";
 use constant TIMEOUT       => $ENV{HOPSCOTCH_TIMEOUT}       // 60;
 use constant HEADER_VIA    => $ENV{HOPSCOTCH_HEADER_VIA}    // "1.0 hopscotch";
@@ -24,6 +21,7 @@ use constant ERRORS        => $ENV{HOPSCOTCH_ERRORS}        // 1;
 use constant CAFILE        => $ENV{HOPSCOTCH_CAFILE}        // undef;
 use constant CAPATH        => $ENV{HOPSCOTCH_CAPATH}        // undef;
 use constant IGNORE_CERTS  => $ENV{HOPSCOTCH_IGNORE_CERTS}  // undef;
+use constant NO_WARN       => $ENV{HOPSCOTCH_NO_WARN}       // undef;
 
 my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
     accept accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
@@ -109,7 +107,7 @@ sub response {
     my $err;
     if (defined $_[2]) {
         $err = cleanup_error($_[2]) if defined $_[2];
-        warn $err;
+        warn $err unless NO_WARN;
         $_[1] //= [];
         push @{$_[1]}, 'Content-type' => 'text/plain';
     }
@@ -188,20 +186,29 @@ if (PARANOID) {
     }
 }
 
+sub to_app {
+    return \&app;
+}
+
 sub app {
     my ($env) = @_;
 
-    return response(405, [], "request method must be GET or HEAD (not $env->{REQUEST_METHOD})") unless $env->{REQUEST_METHOD} =~ m/^GET|HEAD$/;
+    unless ($env->{REQUEST_METHOD} =~ m/^GET|HEAD$/) {
+        return response(
+            405,
+            [],
+            "request method must be GET or HEAD (not $env->{REQUEST_METHOD})"
+        );
+    }
 
-    my (undef, $mac, $hexurl) = split '/', $env->{REQUEST_URI};
+    # Our Auth middleware may set this
+    if ($env->{HOPSCOTCH_AUTH_ERROR}) {
+        my ($code, $error) = @{ $env->{HOPSCOTCH_AUTH_ERROR} };
 
-    return response(404, [], "invalid URL structure (MAC/hex)") unless defined $mac && defined $hexurl;
-    return response(404, [], "invalid characters in hex fragment") unless $hexurl =~ m/^[0-9a-f]+$/;
+        return response($code, [], $error);
+    }
 
-    my $url = pack "h*", $hexurl;
-    my $our_mac = hmac_hex('SHA256', KEY, $url);
-
-    return response(404, [], "invalid MAC") unless lc($mac) eq lc($our_mac);
+    my $url = $env->{REQUEST_URI};
 
     # Valid chars are unreserved + reserved chars from https://tools.ietf.org/html/rfc3986#section-2.2
     return response(404, [], "invalid characters in URL")
@@ -214,7 +221,7 @@ sub app {
         my $bytes = 0;
 
         my (undef, $code, $msg, $headers, $body) = try {
-            $furl->request(
+            my @return = $furl->request(
                 method     => "GET",
                 url        => $url,
                 headers    => request_headers([map { (substr($_, 5) =~ s/_/-/gr) => $env->{$_} } grep { m/^HTTP_/ } keys %$env]),
@@ -241,17 +248,21 @@ sub app {
                         die "remote file exceeded length limit\n" if $bytes > LENGTH_LIMIT;
                         $w->write($buf);
                     }
-                    else {
-                        $w->close;
-                    }
                 }
             );
+
+            if ($w) {
+                # Flush out the response for plack
+                $w->close;
+            }
+
+            return @return;
         }
         catch {
             if ($w) {
                 unless (ref $_) {
                     # part way through stream so we can't return the error to the client
-                    warn cleanup_error("stream aborted: $_");
+                    warn cleanup_error("stream aborted: $_") unless NO_WARN;
                 }
                 $w->close;
             }
@@ -298,6 +309,4 @@ if (my ($url) = @ARGV) {
     exit 0;
 }
 
-if (caller) {
-    return \&app;
-}
+1;

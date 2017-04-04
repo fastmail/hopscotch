@@ -21,17 +21,17 @@ of the same concept.
 ### docker
 
 ```bash
-$ docker run --name hopscotch -e HOPSCOTCH_KEY=abc123 -d -p 8080:8080 robn/hopscotch
+$ docker run --name hopscotch.psgi -e HOPSCOTCH_KEY=abc123 -d -p 8080:8080 bin/hopscotch.psgi
 ```
 
 ### carton
 
 ```bash
-$ git clone http://github.com/robn/hopscotch.git
+$ git clone http://github.com/fastmail/hopscotch.git
 $ cd hopscotch
 $ curl -L http://cpanmin.us | perl - Carton Starlet
 $ carton install --deployment
-$ env HOPSCOTCH_KEY=abc123 carton exec plackup -s Starlet -p 8080 ./hopscotch
+$ env HOPSCOTCH_KEY=abc123 carton exec plackup -s Starlet -p 8080 ./bin/hopscotch.psgi
 ```
 
 ### anything else
