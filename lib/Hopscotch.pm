@@ -221,7 +221,7 @@ sub app {
         my $bytes = 0;
 
         my (undef, $code, $msg, $headers, $body) = try {
-            $furl->request(
+            my @return = $furl->request(
                 method     => "GET",
                 url        => $url,
                 headers    => request_headers([map { (substr($_, 5) =~ s/_/-/gr) => $env->{$_} } grep { m/^HTTP_/ } keys %$env]),
@@ -255,6 +255,8 @@ sub app {
                 # Flush out the response for plack
                 $w->close;
             }
+
+            return @return;
         }
         catch {
             if ($w) {
