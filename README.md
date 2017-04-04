@@ -18,12 +18,6 @@ of the same concept.
 
 ## setup
 
-### docker
-
-```bash
-$ docker run --name hopscotch.psgi -e HOPSCOTCH_KEY=abc123 -d -p 8080:8080 bin/hopscotch.psgi
-```
-
 ### carton
 
 ```bash
