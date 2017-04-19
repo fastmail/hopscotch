@@ -178,11 +178,11 @@ if (PARANOID) {
     $furl->{inet_aton} = sub {
         my ($host) = @_;
         my ($addrs) = try { $dns->resolve($host) };
-        unless (defined $addrs) {
+        unless (ref $addrs eq 'ARRAY') {
             $! = 14; # EFAULT = Bad address ;)
             return;
         }
-        Socket::inet_aton($host);
+        Socket::inet_aton($addrs->[0]);
     }
 }
 
