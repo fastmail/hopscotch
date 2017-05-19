@@ -8,7 +8,7 @@ use ExtUtils::MakeMaker;
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "tiny, high-performance HTTP image proxy",
-  "AUTHOR" => "Robert Norris",
+  "AUTHOR" => "Rob N \x{2605}",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0
   },
