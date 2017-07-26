@@ -81,7 +81,7 @@ sub request_headers {
     my ($headers) = @_;
     my $it = natatime 2, @$headers;
     [
-        (map { my ($k, $v) = $it->(); exists $COPY_REQUEST_HEADERS{lc($k)} ? ($k, $v) : () } (1..(scalar @$headers)/2)),
+        (map { my ($k, $v) = $it->(); exists $COPY_REQUEST_HEADERS{lc($k)} ? (lc($k), $v) : () } (1..(scalar @$headers)/2)),
         'Via' => HEADER_VIA,
     ];
 }
@@ -90,7 +90,7 @@ sub response_headers {
     my ($headers) = @_;
     my $it = natatime 2, @$headers;
     [
-        (map { my ($k, $v) = $it->(); exists $COPY_RESPONSE_HEADERS{lc($k)} ? ($k, $v) : () } (1..(scalar @$headers)/2)),
+        (map { my ($k, $v) = $it->(); exists $COPY_RESPONSE_HEADERS{lc($k)} ? (lc($k), $v) : () } (1..(scalar @$headers)/2)),
         'Via' => HEADER_VIA,
         'X-Hopscotch-Host' => HOST,
     ];
