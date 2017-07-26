@@ -24,11 +24,11 @@ use constant IGNORE_CERTS  => $ENV{HOPSCOTCH_IGNORE_CERTS}  // undef;
 use constant NO_WARN       => $ENV{HOPSCOTCH_NO_WARN}       // undef;
 
 my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
-    accept accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
+    accept accept-encoding accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
 );
 
 my %COPY_RESPONSE_HEADERS = map { $_ => 1 } qw(
-    content-type cache-control etag expires last-modified content-length server
+    content-type content-encoding cache-control etag expires last-modified content-length server
 );
 
 my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
