@@ -289,25 +289,4 @@ sub app {
     };
 }
 
-if (my ($url) = @ARGV) {
-    $url =~ s{http://[^/]+}{};
-    my $r = app({
-        REQUEST_METHOD => 'GET',
-        REQUEST_URI    => $url,
-    });
-
-    if (ref $r eq "ARRAY") {
-        # error already output in response()
-        exit 0;
-    }
-
-    if (ref $r eq "CODE") {
-        open my $w, '<', '/dev/null';
-        my $respond = sub { $w };
-        $r->($respond);
-    }
-
-    exit 0;
-}
-
 1;
