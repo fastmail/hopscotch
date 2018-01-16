@@ -51,10 +51,16 @@ sub new_app_and_tester {
 
     local %ENV = %ENV;
 
-    $ENV{$_} = $args->{$_} for keys %$args;
+    $ENV{$_} = $args->{$_} for grep {
+      /^[A-Z_]+$/
+    } keys %$args;
 
     my $app = do "bin/hopscotch.psgi"
         || die "Failed to execute ./bin/hopscotch: $@\n";
+
+    if ($args->{wrap}) {
+      $app = $args->{wrap}->($app);
+    }
 
     my $wrapped_app = sub {
         my ($env) = @_;
