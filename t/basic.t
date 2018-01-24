@@ -9,6 +9,7 @@ use Test::More 0.88;
 use Crypt::Mac::HMAC qw(hmac_hex);
 use Hopscotch::Tester;
 use MIME::Base64;
+use Socket qw(inet_aton inet_ntoa);
 
 subtest "quoth the upstream '404'" => sub {
     my $key = 'abcd';

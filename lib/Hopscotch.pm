@@ -172,18 +172,33 @@ my $furl = Furl::HTTP->new(
     },
 );
 
+# These hosts we've said "Okay, we know these resolve internally, and
+# we're fine with that"
+my %PARANOID_OKAY_HOSTS;
+
+sub set_paranoid_okay_hosts {
+  %PARANOID_OKAY_HOSTS = map { $_ => 1 } @_;
+}
+
+sub paranoid_okay_hosts { keys %PARANOID_OKAY_HOSTS }
+
 if (PARANOID) {
     require Net::DNS::Paranoid;
     require Socket;
     my $dns = Net::DNS::Paranoid->new;
     $furl->{inet_aton} = sub {
         my ($host) = @_;
-        my ($addrs) = try { $dns->resolve($host) };
-        unless (ref $addrs eq 'ARRAY') {
-            $! = 14; # EFAULT = Bad address ;)
-            return;
+        if ($PARANOID_OKAY_HOSTS{$host}) {
+            # Resolve normally
+            Socket::inet_aton($host);
+        } else {
+            my ($addrs) = try { $dns->resolve($host) };
+            unless (ref $addrs eq 'ARRAY') {
+                $! = 14; # EFAULT = Bad address ;)
+                return;
+            }
+            Socket::inet_aton($addrs->[0]);
         }
-        Socket::inet_aton($addrs->[0]);
     }
 }
 
