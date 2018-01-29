@@ -8,7 +8,11 @@ use Plack::Request;
 use Plack::Middleware::BufferedStreaming;
 use Imager;
 
-# Handle ?format=jpeg&max-width=1200&max-height=1000
+# Handle resizing/reformating of images through:
+#
+# psgi.hopscotch.format
+# psgi.hopscotch.max-height
+# psgi.hopscotch.max-width
 
 sub wrap {
     my ($class, $app) = @_;
@@ -19,10 +23,10 @@ sub wrap {
         my $req = Plack::Request->new($env);
 
         my %arg = map {
-            $_ => $req->parameters->{$_} . "",
+            $_ => $env->{"psgi.hopscotch.$_"} . "",
         } grep {
-            $req->parameters->{$_}
-        } qw(format max-width max-height);
+            $env->{"psgi.hopscotch.$_"}
+        } qw(format max-height max-width);
 
         unless (%arg) {
             # Not trying to modify? Return a streamed response
