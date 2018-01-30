@@ -35,9 +35,27 @@ my ($app, $tester) = Hopscotch::Tester->new_app_and_tester({
     HOPSCOTCH_NO_WARN => 1,
 
     wrap => sub {
-      my $app = shift;
+        my $app = shift;
 
-      return Hopscotch::Resize->wrap($app);
+        $app = Hopscotch::Resize->wrap($app);
+
+        return sub {
+            my ($env) = @_;
+
+            if (my $fmt = $ENV{HOPSCOTCH_RESIZE_FORMAT}) {
+              $env->{'psgi.hopscotch.format'} = $fmt;
+            }
+
+            if (my $hgt = $ENV{HOPSCOTCH_RESIZE_HEIGHT}) {
+              $env->{'psgi.hopscotch.max-height'} = $hgt;
+            }
+
+            if (my $wdt = $ENV{HOPSCOTCH_RESIZE_WIDTH}) {
+              $env->{'psgi.hopscotch.max-width'} = $wdt;
+            }
+
+            $app->($env);
+        };
     },
 });
 
@@ -64,7 +82,9 @@ subtest "max above" => sub {
     my $mac = hmac_hex('SHA256', $key, $url);
     my $hex_url = unpack('h*', $url);
 
-    my $res = $tester->get("$mac/$hex_url?max-height=1000");
+    local $ENV{HOPSCOTCH_RESIZE_HEIGHT} = 1000;
+
+    my $res = $tester->get("$mac/$hex_url");
     is($res->code, 200, 'got 200');
     is($res->header('Content-Type'), 'image/png', 'ct is right');
     is(
@@ -74,13 +94,15 @@ subtest "max above" => sub {
     );
 };
 
-subtest "maxx below" => sub {
+subtest "max height below" => sub {
     my $key = 'abcd';
 
     my $mac = hmac_hex('SHA256', $key, $url);
     my $hex_url = unpack('h*', $url);
 
-    my $res = $tester->get("$mac/$hex_url?max-height=4");
+    local $ENV{HOPSCOTCH_RESIZE_HEIGHT} = 4;
+
+    my $res = $tester->get("$mac/$hex_url");
     is($res->code, 200, 'got 200');
     is($res->header('Content-Type'), 'image/png', 'ct is right');
     is(
@@ -90,13 +112,15 @@ subtest "maxx below" => sub {
     );
 };
 
-subtest "maxy below" => sub {
+subtest "max width below" => sub {
     my $key = 'abcd';
 
     my $mac = hmac_hex('SHA256', $key, $url);
     my $hex_url = unpack('h*', $url);
 
-    my $res = $tester->get("$mac/$hex_url?max-width=4");
+    local $ENV{HOPSCOTCH_RESIZE_WIDTH} = 4;
+
+    my $res = $tester->get("$mac/$hex_url");
     is($res->code, 200, 'got 200');
     is($res->header('Content-Type'), 'image/png', 'ct is right');
     is(
@@ -112,7 +136,9 @@ subtest "reformat, no change" => sub {
     my $mac = hmac_hex('SHA256', $key, $url);
     my $hex_url = unpack('h*', $url);
 
-    my $res = $tester->get("$mac/$hex_url?format=png");
+    local $ENV{HOPSCOTCH_RESIZE_FORMAT} = 'png';
+
+    my $res = $tester->get("$mac/$hex_url");
     is($res->code, 200, 'got 200');
     is($res->header('Content-Type'), 'image/png', 'ct is right');
     is(
@@ -128,7 +154,9 @@ subtest "reformat to jpeg" => sub {
     my $mac = hmac_hex('SHA256', $key, $url);
     my $hex_url = unpack('h*', $url);
 
-    my $res = $tester->get("$mac/$hex_url?format=jpeg");
+    local $ENV{HOPSCOTCH_RESIZE_FORMAT} = 'jpeg';
+
+    my $res = $tester->get("$mac/$hex_url");
     is($res->code, 200, 'got 200');
     is($res->header('Content-Type'), 'image/jpeg', 'ct is right');
     is(
@@ -144,7 +172,11 @@ subtest "reformat and resize" => sub {
     my $mac = hmac_hex('SHA256', $key, $url);
     my $hex_url = unpack('h*', $url);
 
-    my $res = $tester->get("$mac/$hex_url?format=jpeg&max-height=3&max-width=3");
+    local $ENV{HOPSCOTCH_RESIZE_FORMAT} = 'jpeg';
+    local $ENV{HOPSCOTCH_RESIZE_HEIGHT} = 3;
+    local $ENV{HOPSCOTCH_RESIZE_WIDTH} = 3;
+
+    my $res = $tester->get("$mac/$hex_url");
     is($res->code, 200, 'got 200');
     is($res->header('Content-Type'), 'image/jpeg', 'ct is right');
     is(
