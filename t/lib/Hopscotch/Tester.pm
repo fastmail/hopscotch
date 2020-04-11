@@ -55,7 +55,7 @@ sub new_app_and_tester {
       /^[A-Z_]+$/
     } keys %$args;
 
-    my $app = do "bin/hopscotch.psgi"
+    my $app = do "./bin/hopscotch.psgi"
         || die "Failed to execute ./bin/hopscotch: $@\n";
 
     if ($args->{wrap}) {
