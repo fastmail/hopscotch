@@ -90,11 +90,25 @@ sub request_headers {
 sub response_headers {
     my ($headers) = @_;
     my $it = natatime 2, @$headers;
-    [
-        (map { my ($k, $v) = $it->(); exists $COPY_RESPONSE_HEADERS{lc($k)} ? (lc($k), $v) : () } (1..(scalar @$headers)/2)),
+    my @out_headers;
+
+    while (my ($k, $v) =  $it->()) {
+        next unless exists $COPY_RESPONSE_HEADERS{ lc $k };
+
+        # Chosen arbitrarily as "seems pretty large". -- rjbs, 2020-06-15
+        if (length $v > 1024 && ! NO_WARN) {
+            warn sprintf "proxying large (%ib) %s header", length $v, $k;
+        }
+
+        push @out_headers, lc $k, $v;
+    }
+
+    push @out_headers, (
         'Via' => HEADER_VIA,
         'X-Hopscotch-Host' => HOST,
-    ];
+    );
+
+    return \@out_headers;
 }
 
 sub cleanup_error {
