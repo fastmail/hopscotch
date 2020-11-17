@@ -75,6 +75,7 @@ my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
     image/x-xbitmap
     image/x-xpixmap
     image/x-xwindowdump
+    image/x-icon
 );
 
 sub request_headers {
