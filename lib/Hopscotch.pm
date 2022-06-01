@@ -22,6 +22,7 @@ use constant CAFILE        => $ENV{HOPSCOTCH_CAFILE}        // undef;
 use constant CAPATH        => $ENV{HOPSCOTCH_CAPATH}        // undef;
 use constant IGNORE_CERTS  => $ENV{HOPSCOTCH_IGNORE_CERTS}  // undef;
 use constant NO_WARN       => $ENV{HOPSCOTCH_NO_WARN}       // undef;
+use constant SET_AUTHORITY => $ENV{HOPSCOTCH_SET_AUTHORITY} // undef;
 
 my %COPY_REQUEST_HEADERS = map { $_ => 1 } qw(
     accept accept-language cache-control if-modified-since if-match if-none-match if-unmodified-since
@@ -79,12 +80,14 @@ my %VALID_CONTENT_TYPES = map { $_ => 1 } qw(
 );
 
 sub request_headers {
-    my ($headers) = @_;
+    my ($url, $headers) = @_;
+    my ($host_port) = join ':', grep { defined } ($url =~ m{\A [a-z]+ :// ([^/:@?]+) (:[0-9]+)? }x);
     my $it = natatime 2, @$headers;
     [
         (map { my ($k, $v) = $it->(); exists $COPY_REQUEST_HEADERS{lc($k)} ? (lc($k), $v) : () } (1..(scalar @$headers)/2)),
         'Via' => HEADER_VIA,
         'Accept-encoding' => 'identity',
+        ($host_port && SET_AUTHORITY()) ? ('Authority' => $host_port) : (),
     ];
 }
 
@@ -241,7 +244,9 @@ sub app {
             my @return = $furl->request(
                 method     => "GET",
                 url        => $url,
-                headers    => request_headers([map { (substr($_, 5) =~ s/_/-/gr) => $env->{$_} } grep { m/^HTTP_/ } keys %$env]),
+                headers    => request_headers($url, [
+                    map { (substr($_, 5) =~ s/_/-/gr) => $env->{$_} } grep { m/^HTTP_/ } keys %$env
+                ]),
                 write_code => sub {
                     my ($code, $msg, $headers, $buf) = @_;
 
